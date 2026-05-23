@@ -1,0 +1,226 @@
+{
+  "clientName": "Thunder Client",
+  "collectionName": "Gestion Financement — Escomptes & Tests Métier",
+  "dateExported": "2026-05-18",
+  "version": "1.1",
+  "folders": [
+    { "name": "01 - Authentification" },
+    { "name": "02 - Escomptes (cas valides)" },
+    { "name": "03 - Tests métier (erreurs attendues)" },
+    { "name": "04 - Tests exceptions directes" }
+  ],
+  "requests": [
+
+    {
+      "name": "🔐 Login Admin",
+      "folder": "01 - Authentification",
+      "url": "http://localhost:8080/api/auth/login",
+      "method": "POST",
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"email\": \"admin@gf.ma\",\n  \"motDePasse\": \"admin123\"\n}"
+      },
+      "note": "Copier le token JWT retourné et l'utiliser dans les requêtes suivantes (Authorization: Bearer <token>)"
+    },
+
+    {
+      "name": "✅ Créer escompte valide",
+      "folder": "02 - Escomptes (cas valides)",
+      "url": "http://localhost:8080/api/escomptes",
+      "method": "POST",
+      "headers": [
+        { "name": "Content-Type",  "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer <VOTRE_TOKEN_JWT>" }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"partenaireId\": 1,\n  \"banqueId\": 1,\n  \"montant\": 100000.00,\n  \"taux\": 5.00,\n  \"duree\": 30,\n  \"dateEcheance\": \"2026-06-30\"\n}"
+      },
+      "expectedStatus": 201,
+      "expectedResponse": "{\n  \"id\": 1,\n  \"reference\": \"ESC-...\",\n  \"montant\": 100000.00,\n  \"taux\": 5.00,\n  \"agios\": 416.67,\n  \"netRecu\": 99583.33,\n  \"statut\": \"EN_ATTENTE\"\n}"
+    },
+
+    {
+      "name": "✅ Créer escompte 500 000 MAD, 7.5%, 90j",
+      "folder": "02 - Escomptes (cas valides)",
+      "url": "http://localhost:8080/api/escomptes",
+      "method": "POST",
+      "headers": [
+        { "name": "Content-Type",  "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer <VOTRE_TOKEN_JWT>" }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"partenaireId\": 1,\n  \"banqueId\": 1,\n  \"montant\": 500000.00,\n  \"taux\": 7.50,\n  \"duree\": 90\n}"
+      },
+      "expectedStatus": 201,
+      "expectedResponse": "{\n  \"agios\": 9375.00,\n  \"netRecu\": 490625.00\n}"
+    },
+
+    {
+      "name": "✅ Liste paginée des escomptes",
+      "folder": "02 - Escomptes (cas valides)",
+      "url": "http://localhost:8080/api/escomptes?page=0&size=10&sort=dateCreation,desc",
+      "method": "GET",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer <VOTRE_TOKEN_JWT>" }
+      ],
+      "expectedStatus": 200,
+      "note": "Retourne une Page Spring avec content[], totalElements, totalPages"
+    },
+
+    {
+      "name": "✅ Filtrer escomptes par statut EN_ATTENTE",
+      "folder": "02 - Escomptes (cas valides)",
+      "url": "http://localhost:8080/api/escomptes?statut=EN_ATTENTE&page=0&size=10",
+      "method": "GET",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer <VOTRE_TOKEN_JWT>" }
+      ],
+      "expectedStatus": 200
+    },
+
+    {
+      "name": "✅ Approuver un escompte",
+      "folder": "02 - Escomptes (cas valides)",
+      "url": "http://localhost:8080/api/escomptes/1/statut?statut=APPROUVE",
+      "method": "PATCH",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer <VOTRE_TOKEN_JWT>" }
+      ],
+      "expectedStatus": 200,
+      "note": "Remplacer l'ID 1 par l'ID réel de votre escompte"
+    },
+
+    {
+      "name": "❌ Montant invalide (= 0)",
+      "folder": "03 - Tests métier (erreurs attendues)",
+      "url": "http://localhost:8080/api/escomptes",
+      "method": "POST",
+      "headers": [
+        { "name": "Content-Type",  "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer <VOTRE_TOKEN_JWT>" }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"partenaireId\": 1,\n  \"banqueId\": 1,\n  \"montant\": 0,\n  \"taux\": 5.00,\n  \"duree\": 30\n}"
+      },
+      "expectedStatus": 400,
+      "expectedResponse": "{\n  \"timestamp\": \"...\",\n  \"status\": 400,\n  \"error\": \"Bad Request\",\n  \"code\": \"VALIDATION_FAILED\",\n  \"message\": \"Validation échouée : Le montant doit être strictement positif\"\n}"
+    },
+
+    {
+      "name": "❌ Montant invalide (négatif)",
+      "folder": "03 - Tests métier (erreurs attendues)",
+      "url": "http://localhost:8080/api/escomptes",
+      "method": "POST",
+      "headers": [
+        { "name": "Content-Type",  "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer <VOTRE_TOKEN_JWT>" }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"partenaireId\": 1,\n  \"banqueId\": 1,\n  \"montant\": -5000,\n  \"taux\": 5.00,\n  \"duree\": 30\n}"
+      },
+      "expectedStatus": 400,
+      "expectedResponse": "{\n  \"status\": 400,\n  \"code\": \"VALIDATION_FAILED\",\n  \"message\": \"Validation échouée : Le montant doit être strictement positif\"\n}"
+    },
+
+    {
+      "name": "❌ Partenaire inconnu (ID inexistant)",
+      "folder": "03 - Tests métier (erreurs attendues)",
+      "url": "http://localhost:8080/api/escomptes",
+      "method": "POST",
+      "headers": [
+        { "name": "Content-Type",  "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer <VOTRE_TOKEN_JWT>" }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"partenaireId\": 9999,\n  \"banqueId\": 1,\n  \"montant\": 100000.00,\n  \"taux\": 5.00,\n  \"duree\": 30\n}"
+      },
+      "expectedStatus": 404,
+      "expectedResponse": "{\n  \"status\": 404,\n  \"error\": \"Not Found\",\n  \"code\": \"PARTENAIRE_INTROUVABLE\",\n  \"message\": \"Partenaire introuvable avec l'identifiant : 9999\"\n}"
+    },
+
+    {
+      "name": "❌ Banque refuse (montant > 5 000 000 MAD)",
+      "folder": "03 - Tests métier (erreurs attendues)",
+      "url": "http://localhost:8080/api/escomptes",
+      "method": "POST",
+      "headers": [
+        { "name": "Content-Type",  "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer <VOTRE_TOKEN_JWT>" }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"partenaireId\": 1,\n  \"banqueId\": 1,\n  \"montant\": 6000000.00,\n  \"taux\": 5.00,\n  \"duree\": 30\n}"
+      },
+      "expectedStatus": 422,
+      "expectedResponse": "{\n  \"status\": 422,\n  \"error\": \"Unprocessable Entity\",\n  \"code\": \"FINANCEMENT_REFUSE\",\n  \"message\": \"Demande de financement refusée par la banque : montant 6000000.00 MAD dépasse le plafond autorisé de 5000000 MAD\"\n}"
+    },
+
+    {
+      "name": "❌ Durée invalide (> 365 jours)",
+      "folder": "03 - Tests métier (erreurs attendues)",
+      "url": "http://localhost:8080/api/escomptes",
+      "method": "POST",
+      "headers": [
+        { "name": "Content-Type",  "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer <VOTRE_TOKEN_JWT>" }
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"partenaireId\": 1,\n  \"banqueId\": 1,\n  \"montant\": 100000.00,\n  \"taux\": 5.00,\n  \"duree\": 400\n}"
+      },
+      "expectedStatus": 400,
+      "expectedResponse": "{\n  \"status\": 400,\n  \"code\": \"VALIDATION_FAILED\",\n  \"message\": \"Validation échouée : La durée ne peut pas dépasser 365 jours\"\n}"
+    },
+
+    {
+      "name": "🧪 Test direct : FinancementRefuseException",
+      "folder": "04 - Tests exceptions directes",
+      "url": "http://localhost:8080/api/test/exceptions/financement-refuse",
+      "method": "GET",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer <VOTRE_TOKEN_JWT>" }
+      ],
+      "expectedStatus": 422
+    },
+
+    {
+      "name": "🧪 Test direct : PartenaireIntrouvableException",
+      "folder": "04 - Tests exceptions directes",
+      "url": "http://localhost:8080/api/test/exceptions/partenaire-introuvable?id=99",
+      "method": "GET",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer <VOTRE_TOKEN_JWT>" }
+      ],
+      "expectedStatus": 404
+    },
+
+    {
+      "name": "🧪 Test direct : MontantInvalideException",
+      "folder": "04 - Tests exceptions directes",
+      "url": "http://localhost:8080/api/test/exceptions/montant-invalide",
+      "method": "GET",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer <VOTRE_TOKEN_JWT>" }
+      ],
+      "expectedStatus": 400
+    },
+
+    {
+      "name": "🧪 Valider montant valide (1000 MAD)",
+      "folder": "04 - Tests exceptions directes",
+      "url": "http://localhost:8080/api/test/exceptions/valider-montant?montant=1000",
+      "method": "GET",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer <VOTRE_TOKEN_JWT>" }
+      ],
+      "expectedStatus": 200,
+      "expectedResponse": "Montant valide : 1000 MAD"
+    }
+  ]
+}
