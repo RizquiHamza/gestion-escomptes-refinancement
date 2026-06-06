@@ -40,15 +40,18 @@ public class SecurityConfig {
             // Règles d'autorisation par endpoint
             .authorizeHttpRequests(auth -> auth
 
-                // Routes publiques : login, register + Swagger UI
-                .requestMatchers("/api/auth/**").permitAll()
+                // Routes publiques : login, register, demande reset + Swagger UI
+                .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
+                .requestMatchers("/api/auth/demande-reinitialisation").permitAll()
                 .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
 
                 // Gestion des utilisateurs → ADMIN uniquement
                 .requestMatchers("/api/utilisateurs/**").hasRole("ADMIN")
 
-                // Dashboard et logs → ADMIN et RESPONSABLE
-                .requestMatchers("/api/dashboard/**").hasAnyRole("ADMIN", "RESPONSABLE")
+                // Dashboard → tous les utilisateurs authentifiés
+                .requestMatchers("/api/dashboard/**").authenticated()
+
+                // Logs → ADMIN et RESPONSABLE uniquement
                 .requestMatchers("/api/logs/**").hasAnyRole("ADMIN", "RESPONSABLE")
 
                 // Suppressions sensibles → ADMIN et RESPONSABLE uniquement

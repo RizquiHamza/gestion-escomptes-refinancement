@@ -35,6 +35,18 @@ function BanqueForm({ onSubmit, defaultValues, loading }) {
         <label className="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
         <input className="input-field" {...register('telephone')} />
       </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Taux d'escompte (%)</label>
+          <input type="number" step="0.01" min="0" max="100" className="input-field"
+            {...register('tauxEscompte', { valueAsNumber: true })} />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Taux de refinancement (%)</label>
+          <input type="number" step="0.01" min="0" max="100" className="input-field"
+            {...register('tauxRefinancement', { valueAsNumber: true })} />
+        </div>
+      </div>
       <div className="flex justify-end gap-3 pt-2">
         <button type="submit" disabled={loading} className="btn-primary text-sm">
           {loading ? 'Enregistrement…' : 'Enregistrer'}
@@ -99,20 +111,22 @@ export default function BanquesPage() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                {['Nom', 'Code', 'Adresse', 'Téléphone', 'Actions'].map(h => (
+                {['Nom', 'Code', 'Adresse', 'Téléphone', 'T. Escompte', 'T. Refinancement', 'Actions'].map(h => (
                   <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {banques.length === 0 ? (
-                <tr><td colSpan={5} className="text-center py-12 text-gray-400">Aucune banque</td></tr>
+                <tr><td colSpan={7} className="text-center py-12 text-gray-400">Aucune banque</td></tr>
               ) : banques.map(b => (
                 <tr key={b.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3 font-medium text-gray-900">{b.nom}</td>
                   <td className="px-4 py-3 text-gray-600 font-mono text-xs">{b.code}</td>
                   <td className="px-4 py-3 text-gray-600">{b.adresse || '—'}</td>
                   <td className="px-4 py-3 text-gray-600">{b.telephone || '—'}</td>
+                  <td className="px-4 py-3 text-gray-600">{b.tauxEscompte != null ? `${b.tauxEscompte} %` : '—'}</td>
+                  <td className="px-4 py-3 text-gray-600">{b.tauxRefinancement != null ? `${b.tauxRefinancement} %` : '—'}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <button onClick={() => { setSelected(b); setShowForm(true) }}
@@ -137,7 +151,7 @@ export default function BanquesPage() {
       <Modal isOpen={showForm} onClose={() => setShowForm(false)}
         title={selected ? 'Modifier la banque' : 'Nouvelle banque'}>
         <BanqueForm onSubmit={handleSave} loading={saving}
-          defaultValues={selected || { nom: '', code: '', adresse: '', telephone: '' }} />
+          defaultValues={selected || { nom: '', code: '', adresse: '', telephone: '', tauxEscompte: '', tauxRefinancement: '' }} />
       </Modal>
 
       <ConfirmDialog isOpen={showDel} onClose={() => setShowDel(false)} onConfirm={handleDelete}

@@ -3,18 +3,18 @@ import Sidebar from './Sidebar'
 import Navbar from './Navbar'
 
 const PAGE_TITLES = {
-  '/dashboard':      'Dashboard',
+  '/dashboard':      'Tableau de bord',
   '/escomptes':      'Escomptes',
   '/refinancements': 'Refinancements',
   '/partenaires':    'Partenaires',
   '/banques':        'Banques',
   '/utilisateurs':   'Utilisateurs',
-  '/logs':           'Logs d\'activité',
+  '/logs':           'Journaux d\'activité',
 }
 
 export default function MainLayout() {
   const { pathname } = useLocation()
-  const title = PAGE_TITLES[pathname] || 'Gestion Financement'
+  const title = PAGE_TITLES[pathname] || 'Gestion Financière'
 
   return (
     <div className="flex min-h-screen bg-gray-50">

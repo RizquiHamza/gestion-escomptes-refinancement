@@ -21,6 +21,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Escomptes", description = "Gestion des opérations d'escompte (clients)")
@@ -67,16 +69,33 @@ public class EscompteController {
     @ApiResponse(responseCode = "201", description = "Escompte créé")
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'RESPONSABLE', 'AGENT_FINANCIER')")
-    public ResponseEntity<EscompteResponse> create(@Valid @RequestBody EscompteRequest request) {
+    public ResponseEntity<EscompteResponse> create(
+            @Valid @RequestBody EscompteRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
         Escompte escompte = Escompte.builder()
                 .montant(request.getMontant())
-                .taux(request.getTaux())
                 .duree(request.getDuree())
                 .dateEcheance(request.getDateEcheance())
                 .build();
+        String email = userDetails != null ? userDetails.getUsername() : null;
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(EscompteMapper.toDto(
-                        escompteService.create(request.getPartenaireId(), request.getBanqueId(), escompte)));
+                        escompteService.create(request.getPartenaireId(), request.getBanqueId(), escompte, email)));
+    }
+
+    @Operation(summary = "Soumettre un escompte pour validation",
+               description = "L'agent financier resoumet un escompte rejeté au responsable. Interdit si déjà approuvé ou annulé.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Escompte soumis, statut EN_ATTENTE"),
+        @ApiResponse(responseCode = "400", description = "Soumission impossible (déjà approuvé ou annulé)")
+    })
+    @PatchMapping("/{id}/soumettre")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RESPONSABLE', 'AGENT_FINANCIER')")
+    public ResponseEntity<EscompteResponse> soumettre(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails != null ? userDetails.getUsername() : null;
+        return ResponseEntity.ok(EscompteMapper.toDto(escompteService.soumettre(id, email)));
     }
 
     @Operation(summary = "Modifier un escompte existant")
@@ -94,16 +113,21 @@ public class EscompteController {
     @PreAuthorize("hasAnyRole('ADMIN', 'RESPONSABLE')")
     public ResponseEntity<EscompteResponse> changerStatut(
             @PathVariable Long id,
-            @RequestParam StatutOperation statut) {
-        return ResponseEntity.ok(EscompteMapper.toDto(escompteService.changerStatut(id, statut)));
+            @RequestParam StatutOperation statut,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails != null ? userDetails.getUsername() : null;
+        return ResponseEntity.ok(EscompteMapper.toDto(escompteService.changerStatut(id, statut, email)));
     }
 
     @Operation(summary = "Supprimer un escompte")
     @ApiResponse(responseCode = "204", description = "Escompte supprimé")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'RESPONSABLE')")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        escompteService.delete(id);
+    public ResponseEntity<Void> delete(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails != null ? userDetails.getUsername() : null;
+        escompteService.delete(id, email);
         return ResponseEntity.noContent().build();
     }
 }

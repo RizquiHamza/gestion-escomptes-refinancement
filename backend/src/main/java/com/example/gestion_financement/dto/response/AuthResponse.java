@@ -20,6 +20,7 @@ public class AuthResponse {
     private String email;
     private String nom;
     private String prenom;
-    private String role;
-    private long expiresIn;
+    private String  role;
+    private long    expiresIn;
+    private boolean doitChangerMotDePasse;
 }

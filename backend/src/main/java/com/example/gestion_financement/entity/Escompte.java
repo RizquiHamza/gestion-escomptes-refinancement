@@ -1,6 +1,7 @@
 package com.example.gestion_financement.entity;
 
 import com.example.gestion_financement.enums.StatutOperation;
+import com.example.gestion_financement.entity.Utilisateur;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
@@ -38,6 +39,12 @@ public class Escompte {
     @EqualsAndHashCode.Exclude
     private Banque banque;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "cree_par_id")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private Utilisateur creePar;
+
     @NotNull
     @DecimalMin("0.01")
     @Column(nullable = false, precision = 15, scale = 2)
@@ -70,9 +77,6 @@ public class Escompte {
     public void prePersist() {
         if (dateCreation == null) {
             dateCreation = LocalDate.now();
-        }
-        if (reference == null) {
-            reference = "ESC-" + System.currentTimeMillis();
         }
         calculerAgios();
     }

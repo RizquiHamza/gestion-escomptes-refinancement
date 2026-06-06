@@ -21,8 +21,9 @@ import java.math.BigDecimal;
 public class RefinancementService {
 
     private final RefinancementRepository refinancementRepository;
-    private final PartenaireService partenaireService;
-    private final BanqueService banqueService;
+    private final PartenaireService        partenaireService;
+    private final BanqueService            banqueService;
+    private final LogActionService         logActionService;
 
     // ─── Lecture paginée ──────────────────────────────────────────────────────────
 
@@ -51,7 +52,7 @@ public class RefinancementService {
 
     // ─── Écriture ─────────────────────────────────────────────────────────────────
 
-    public Refinancement create(Long partenaireId, Long banqueId, Refinancement refinancement) {
+    public Refinancement create(Long partenaireId, Long banqueId, Refinancement refinancement, String userEmail) {
         Partenaire partenaire = partenaireService.findById(partenaireId);
         if (partenaire.getType() != TypePartenaire.FOURNISSEUR) {
             throw new IllegalArgumentException(
@@ -60,28 +61,56 @@ public class RefinancementService {
         Banque banque = banqueService.findById(banqueId);
         refinancement.setPartenaire(partenaire);
         refinancement.setBanque(banque);
+
+        if (banque.getTauxRefinancement() == null) {
+            throw new IllegalArgumentException(
+                "La banque « " + banque.getNom() + " » n'a pas de taux de refinancement configuré. Veuillez le renseigner dans la fiche banque.");
+        }
+        refinancement.setTaux(banque.getTauxRefinancement());
         refinancement.calculerInterets();
-        return refinancementRepository.save(refinancement);
+
+        Refinancement saved = refinancementRepository.save(refinancement);
+
+        // Référence courte : REF-{année}-{id sur 4 chiffres min}
+        saved.setReference(String.format("REF-%d-%04d",
+            java.time.LocalDate.now().getYear(), saved.getId()));
+        saved = refinancementRepository.save(saved);
+
+        logActionService.logParEmail(userEmail, "CRÉATION", "Refinancement", saved.getId(),
+            "Réf : " + saved.getReference() + " — Montant : " + saved.getMontant() + " MAD"
+            + " — Fournisseur : " + partenaire.getNom() + " — Banque : " + banque.getNom());
+        return saved;
     }
 
     public Refinancement update(Long id, Refinancement updated) {
         Refinancement existing = findById(id);
         existing.setMontant(updated.getMontant());
-        existing.setTaux(updated.getTaux());
         existing.setDuree(updated.getDuree());
         existing.setDateEcheance(updated.getDateEcheance());
         existing.calculerInterets();
         return refinancementRepository.save(existing);
     }
 
-    public Refinancement changerStatut(Long id, StatutOperation statut) {
+    public Refinancement changerStatut(Long id, StatutOperation statut, String userEmail) {
         Refinancement refinancement = findById(id);
+        StatutOperation ancien = refinancement.getStatut();
         refinancement.setStatut(statut);
-        return refinancementRepository.save(refinancement);
+        Refinancement saved = refinancementRepository.save(refinancement);
+        String action = switch (statut) {
+            case APPROUVE -> "APPROBATION";
+            case REJETE   -> "REJET";
+            case ANNULE   -> "ANNULATION";
+            default       -> "MODIFICATION";
+        };
+        logActionService.logParEmail(userEmail, action, "Refinancement", id,
+            "Réf : " + refinancement.getReference() + " — Statut : " + ancien + " → " + statut);
+        return saved;
     }
 
-    public void delete(Long id) {
-        findById(id);
+    public void delete(Long id, String userEmail) {
+        Refinancement r = findById(id);
+        logActionService.logParEmail(userEmail, "SUPPRESSION", "Refinancement", id,
+            "Réf : " + r.getReference() + " supprimé");
         refinancementRepository.deleteById(id);
     }
 

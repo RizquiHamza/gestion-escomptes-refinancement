@@ -42,15 +42,9 @@ function PartenaireForm({ onSubmit, defaultValues, loading }) {
           })} />
         {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email.message}</p>}
       </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
-          <input className="input-field" {...register('telephone')} />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">ICE</label>
-          <input className="input-field" {...register('ice')} />
-        </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
+        <input className="input-field" {...register('telephone')} />
       </div>
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
@@ -133,21 +127,20 @@ export default function PartenairesPage() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                {['Nom', 'Type', 'Email', 'Téléphone', 'ICE', 'Actions'].map(h => (
+                {['Nom', 'Type', 'Email', 'Téléphone', 'Actions'].map(h => (
                   <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {partenaires.length === 0 ? (
-                <tr><td colSpan={6} className="text-center py-12 text-gray-400">Aucun partenaire</td></tr>
+                <tr><td colSpan={5} className="text-center py-12 text-gray-400">Aucun partenaire</td></tr>
               ) : partenaires.map(p => (
                 <tr key={p.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3 font-medium text-gray-900">{p.nom}</td>
                   <td className="px-4 py-3">{typeBadge(p.type)}</td>
                   <td className="px-4 py-3 text-gray-600 text-xs">{p.email}</td>
                   <td className="px-4 py-3 text-gray-600">{p.telephone || '—'}</td>
-                  <td className="px-4 py-3 text-gray-600 font-mono text-xs">{p.ice || '—'}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <button onClick={() => { setSelected(p); setShowForm(true) }}
@@ -168,7 +161,7 @@ export default function PartenairesPage() {
       <Modal isOpen={showForm} onClose={() => setShowForm(false)} size="lg"
         title={selected ? 'Modifier le partenaire' : 'Nouveau partenaire'}>
         <PartenaireForm onSubmit={handleSave} loading={saving}
-          defaultValues={selected || { nom: '', type: '', email: '', telephone: '', ice: '', adresse: '' }} />
+          defaultValues={selected || { nom: '', type: '', email: '', telephone: '', adresse: '' }} />
       </Modal>
 
       <ConfirmDialog isOpen={showDel} onClose={() => setShowDel(false)} onConfirm={handleDelete}

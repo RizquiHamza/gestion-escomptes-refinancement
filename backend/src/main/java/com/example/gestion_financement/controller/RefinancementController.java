@@ -21,6 +21,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Refinancements", description = "Gestion des opérations de refinancement (fournisseurs)")
@@ -67,16 +69,18 @@ public class RefinancementController {
     @ApiResponse(responseCode = "201", description = "Refinancement créé")
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'RESPONSABLE', 'AGENT_FINANCIER')")
-    public ResponseEntity<RefinancementResponse> create(@Valid @RequestBody RefinancementRequest request) {
+    public ResponseEntity<RefinancementResponse> create(
+            @Valid @RequestBody RefinancementRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
         Refinancement refinancement = Refinancement.builder()
                 .montant(request.getMontant())
-                .taux(request.getTaux())
                 .duree(request.getDuree())
                 .dateEcheance(request.getDateEcheance())
                 .build();
+        String email = userDetails != null ? userDetails.getUsername() : null;
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(RefinancementMapper.toDto(
-                        refinancementService.create(request.getPartenaireId(), request.getBanqueId(), refinancement)));
+                        refinancementService.create(request.getPartenaireId(), request.getBanqueId(), refinancement, email)));
     }
 
     @Operation(summary = "Modifier un refinancement existant")
@@ -94,16 +98,21 @@ public class RefinancementController {
     @PreAuthorize("hasAnyRole('ADMIN', 'RESPONSABLE')")
     public ResponseEntity<RefinancementResponse> changerStatut(
             @PathVariable Long id,
-            @RequestParam StatutOperation statut) {
-        return ResponseEntity.ok(RefinancementMapper.toDto(refinancementService.changerStatut(id, statut)));
+            @RequestParam StatutOperation statut,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails != null ? userDetails.getUsername() : null;
+        return ResponseEntity.ok(RefinancementMapper.toDto(refinancementService.changerStatut(id, statut, email)));
     }
 
     @Operation(summary = "Supprimer un refinancement")
     @ApiResponse(responseCode = "204", description = "Refinancement supprimé")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'RESPONSABLE')")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        refinancementService.delete(id);
+    public ResponseEntity<Void> delete(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails != null ? userDetails.getUsername() : null;
+        refinancementService.delete(id, email);
         return ResponseEntity.noContent().build();
     }
 }

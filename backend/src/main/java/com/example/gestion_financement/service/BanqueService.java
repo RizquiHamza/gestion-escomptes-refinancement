@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class BanqueService {
 
     private final BanqueRepository banqueRepository;
+    private final LogActionService logActionService;
 
     // ─── Lecture paginée ──────────────────────────────────────────────────────────
 
@@ -33,7 +34,7 @@ public class BanqueService {
 
     // ─── Écriture ─────────────────────────────────────────────────────────────────
 
-    public Banque save(Banque banque) {
+    public Banque save(Banque banque, String userEmail) {
         if (banque.getCode() != null && banqueRepository.existsByCode(banque.getCode())) {
             throw new IllegalArgumentException(
                 "Une banque avec ce code existe déjà: " + banque.getCode());
@@ -42,10 +43,13 @@ public class BanqueService {
             throw new IllegalArgumentException(
                 "Une banque avec ce nom existe déjà: " + banque.getNom());
         }
-        return banqueRepository.save(banque);
+        Banque saved = banqueRepository.save(banque);
+        logActionService.logParEmail(userEmail, "CRÉATION", "Banque", saved.getId(),
+            "Banque : " + saved.getNom() + (saved.getCode() != null ? " (code : " + saved.getCode() + ")" : ""));
+        return saved;
     }
 
-    public Banque update(Long id, Banque updated) {
+    public Banque update(Long id, Banque updated, String userEmail) {
         Banque existing = findById(id);
         if (updated.getCode() != null
                 && !updated.getCode().equals(existing.getCode())
@@ -62,11 +66,18 @@ public class BanqueService {
         existing.setCode(updated.getCode());
         existing.setAdresse(updated.getAdresse());
         existing.setTelephone(updated.getTelephone());
-        return banqueRepository.save(existing);
+        existing.setTauxEscompte(updated.getTauxEscompte());
+        existing.setTauxRefinancement(updated.getTauxRefinancement());
+        Banque saved = banqueRepository.save(existing);
+        logActionService.logParEmail(userEmail, "MODIFICATION", "Banque", saved.getId(),
+            "Banque : " + saved.getNom() + " — mise à jour");
+        return saved;
     }
 
-    public void delete(Long id) {
-        findById(id);
+    public void delete(Long id, String userEmail) {
+        Banque b = findById(id);
+        logActionService.logParEmail(userEmail, "SUPPRESSION", "Banque", id,
+            "Banque : " + b.getNom() + " supprimée");
         banqueRepository.deleteById(id);
     }
 }

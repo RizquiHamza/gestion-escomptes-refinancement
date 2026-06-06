@@ -26,10 +26,6 @@ public class RefinancementRequest {
     private BigDecimal montant;
 
     @NotNull
-    @DecimalMin(value = "0.01", message = "Le taux doit être positif")
-    private BigDecimal taux;
-
-    @NotNull
     @Min(value = 1, message = "La durée doit être au moins 1 an")
     private Integer duree;
 

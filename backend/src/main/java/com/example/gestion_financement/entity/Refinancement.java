@@ -71,9 +71,6 @@ public class Refinancement {
         if (dateCreation == null) {
             dateCreation = LocalDate.now();
         }
-        if (reference == null) {
-            reference = "REF-" + System.currentTimeMillis();
-        }
         calculerInterets();
     }
 

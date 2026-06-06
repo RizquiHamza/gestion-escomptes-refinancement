@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class PartenaireService {
 
     private final PartenaireRepository partenaireRepository;
+    private final LogActionService     logActionService;
 
     // ─── Lecture paginée ──────────────────────────────────────────────────────────
 
@@ -54,16 +55,19 @@ public class PartenaireService {
 
     // ─── Écriture ─────────────────────────────────────────────────────────────────
 
-    public Partenaire save(Partenaire partenaire) {
+    public Partenaire save(Partenaire partenaire, String userEmail) {
         if (partenaire.getEmail() != null
                 && partenaireRepository.existsByEmail(partenaire.getEmail())) {
             throw new IllegalArgumentException(
                 "Un partenaire avec cet email existe déjà: " + partenaire.getEmail());
         }
-        return partenaireRepository.save(partenaire);
+        Partenaire saved = partenaireRepository.save(partenaire);
+        logActionService.logParEmail(userEmail, "CRÉATION", "Partenaire", saved.getId(),
+            saved.getType() + " : " + saved.getNom());
+        return saved;
     }
 
-    public Partenaire update(Long id, Partenaire updated) {
+    public Partenaire update(Long id, Partenaire updated, String userEmail) {
         Partenaire existing = findById(id);
         if (updated.getEmail() != null
                 && !updated.getEmail().equals(existing.getEmail())
@@ -76,11 +80,16 @@ public class PartenaireService {
         existing.setTelephone(updated.getTelephone());
         existing.setAdresse(updated.getAdresse());
         existing.setType(updated.getType());
-        return partenaireRepository.save(existing);
+        Partenaire saved = partenaireRepository.save(existing);
+        logActionService.logParEmail(userEmail, "MODIFICATION", "Partenaire", saved.getId(),
+            saved.getType() + " : " + saved.getNom() + " — mis à jour");
+        return saved;
     }
 
-    public void delete(Long id) {
-        findById(id);
+    public void delete(Long id, String userEmail) {
+        Partenaire p = findById(id);
+        logActionService.logParEmail(userEmail, "SUPPRESSION", "Partenaire", id,
+            p.getType() + " : " + p.getNom() + " supprimé");
         partenaireRepository.deleteById(id);
     }
 }

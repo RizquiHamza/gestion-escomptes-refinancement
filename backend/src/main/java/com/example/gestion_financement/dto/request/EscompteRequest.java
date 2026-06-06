@@ -37,12 +37,6 @@ public class EscompteRequest {
     @Schema(description = "Montant de l'escompte en MAD", example = "100000.00")
     private BigDecimal montant;
 
-    @NotNull(message = "Le taux est obligatoire")
-    @Positive(message = "Le taux doit être strictement positif")
-    @DecimalMax(value = "100.0", message = "Le taux ne peut pas dépasser 100 %")
-    @Schema(description = "Taux d'escompte annuel en pourcentage", example = "5.00")
-    private BigDecimal taux;
-
     @NotNull(message = "La durée est obligatoire")
     @Min(value = 1,   message = "La durée doit être d'au moins 1 jour")
     @Max(value = 365, message = "La durée ne peut pas dépasser 365 jours")

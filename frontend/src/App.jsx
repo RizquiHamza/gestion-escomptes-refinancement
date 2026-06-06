@@ -4,6 +4,8 @@ import { AuthProvider } from './context/AuthContext'
 import PrivateRoute from './routes/PrivateRoute'
 import MainLayout from './layouts/MainLayout'
 import LoginPage from './pages/auth/LoginPage'
+import MotDePasseOubliePage from './pages/auth/MotDePasseOubliePage'
+import ChangerMotDePassePage from './pages/auth/ChangerMotDePassePage'
 import DashboardPage from './pages/dashboard/DashboardPage'
 import EscomptesPage from './pages/escomptes/EscomptesPage'
 import RefinancementsPage from './pages/refinancements/RefinancementsPage'
@@ -11,6 +13,7 @@ import PartenairesPage from './pages/partenaires/PartenairesPage'
 import BanquesPage from './pages/banques/BanquesPage'
 import UtilisateursPage from './pages/utilisateurs/UtilisateursPage'
 import LogsPage from './pages/logs/LogsPage'
+import StatistiquesPage from './pages/statistiques/StatistiquesPage'
 
 export default function App() {
   return (
@@ -18,8 +21,16 @@ export default function App() {
       <AuthProvider>
         <Toaster position="top-right" toastOptions={{ duration: 3500 }} />
         <Routes>
-          <Route path="/login" element={<LoginPage />} />
+          {/* ── Pages publiques ── */}
+          <Route path="/login"               element={<LoginPage />} />
+          <Route path="/mot-de-passe-oublie" element={<MotDePasseOubliePage />} />
 
+          {/* ── Page de changement de mot de passe forcé (authentifié) ── */}
+          <Route element={<PrivateRoute allowForceChange />}>
+            <Route path="/changer-mot-de-passe" element={<ChangerMotDePassePage />} />
+          </Route>
+
+          {/* ── Application principale (bloquée si doitChangerMotDePasse) ── */}
           <Route element={<PrivateRoute />}>
             <Route element={<MainLayout />}>
               <Route index element={<Navigate to="/dashboard" replace />} />
@@ -29,12 +40,13 @@ export default function App() {
               <Route path="/partenaires"    element={<PartenairesPage />} />
               <Route path="/banques"        element={<BanquesPage />} />
 
-              <Route element={<PrivateRoute roles={['ADMIN', 'RESPONSABLE']} />}>
-                <Route path="/logs" element={<LogsPage />} />
+              <Route element={<PrivateRoute roles={['ADMIN']} />}>
+                <Route path="/logs"         element={<LogsPage />} />
+                <Route path="/utilisateurs" element={<UtilisateursPage />} />
               </Route>
 
-              <Route element={<PrivateRoute roles={['ADMIN']} />}>
-                <Route path="/utilisateurs" element={<UtilisateursPage />} />
+              <Route element={<PrivateRoute roles={['ADMIN', 'RESPONSABLE']} />}>
+                <Route path="/statistiques" element={<StatistiquesPage />} />
               </Route>
             </Route>
           </Route>

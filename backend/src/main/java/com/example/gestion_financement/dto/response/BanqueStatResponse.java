@@ -11,12 +11,9 @@ import java.math.BigDecimal;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class BanqueResponse {
-    private Long id;
-    private String nom;
-    private String code;
-    private String adresse;
-    private String telephone;
-    private BigDecimal tauxEscompte;
-    private BigDecimal tauxRefinancement;
+public class BanqueStatResponse {
+    private String     banqueNom;
+    private long       count;
+    private BigDecimal montantTotal;
+    private BigDecimal chargesTotal;
 }

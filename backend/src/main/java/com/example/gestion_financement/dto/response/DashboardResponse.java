@@ -21,6 +21,7 @@ public class DashboardResponse {
     private long escomptesClos;
     private BigDecimal montantTotalEscomptes;
     private BigDecimal agiosTotaux;
+    private BigDecimal netRecuTotal;
 
     // Refinancements
     private long totalRefinancements;
@@ -28,6 +29,7 @@ public class DashboardResponse {
     private long refinancementsApprouves;
     private BigDecimal montantTotalRefinancements;
     private BigDecimal interetsTotaux;
+    private BigDecimal totalRemboursement;
 
     // Partenaires & Banques
     private long totalClients;

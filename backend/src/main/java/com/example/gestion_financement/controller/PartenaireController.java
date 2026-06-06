@@ -18,6 +18,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Partenaires", description = "Gestion des partenaires (clients et fournisseurs)")
@@ -67,24 +69,32 @@ public class PartenaireController {
     @Operation(summary = "Créer un nouveau partenaire")
     @ApiResponse(responseCode = "201", description = "Partenaire créé")
     @PostMapping
-    public ResponseEntity<PartenaireResponse> create(@Valid @RequestBody Partenaire partenaire) {
+    public ResponseEntity<PartenaireResponse> create(
+            @Valid @RequestBody Partenaire partenaire,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails != null ? userDetails.getUsername() : null;
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(PartenaireMapper.toDto(partenaireService.save(partenaire)));
+                .body(PartenaireMapper.toDto(partenaireService.save(partenaire, email)));
     }
 
     @Operation(summary = "Modifier un partenaire existant")
     @PutMapping("/{id}")
     public ResponseEntity<PartenaireResponse> update(
             @PathVariable Long id,
-            @Valid @RequestBody Partenaire partenaire) {
-        return ResponseEntity.ok(PartenaireMapper.toDto(partenaireService.update(id, partenaire)));
+            @Valid @RequestBody Partenaire partenaire,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails != null ? userDetails.getUsername() : null;
+        return ResponseEntity.ok(PartenaireMapper.toDto(partenaireService.update(id, partenaire, email)));
     }
 
     @Operation(summary = "Supprimer un partenaire")
     @ApiResponse(responseCode = "204", description = "Partenaire supprimé")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        partenaireService.delete(id);
+    public ResponseEntity<Void> delete(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails != null ? userDetails.getUsername() : null;
+        partenaireService.delete(id, email);
         return ResponseEntity.noContent().build();
     }
 }

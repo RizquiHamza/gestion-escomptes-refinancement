@@ -11,22 +11,20 @@ import Pagination from '../../components/common/Pagination'
 import Modal from '../../components/common/Modal'
 import ConfirmDialog from '../../components/common/ConfirmDialog'
 import { StatutBadge } from '../../components/common/Badge'
-import { STATUTS } from '../../utils/constants'
+import { STATUTS, STATUT_LABELS } from '../../utils/constants'
 import { useAuth } from '../../context/AuthContext'
 
 const fmt = (n) => n == null ? '—' : Number(n).toLocaleString('fr-MA', { minimumFractionDigits: 2 })
 
 function RefinancementForm({ onSubmit, defaultValues, loading, partenaires, banques }) {
-  const { register, handleSubmit, formState: { errors }, reset } = useForm({ defaultValues })
+  const { register, handleSubmit, formState: { errors }, reset, watch } = useForm({ defaultValues })
   useEffect(() => { reset(defaultValues) }, [defaultValues, reset])
+
+  const banqueId = watch('banqueId')
+  const banqueSelectionnee = banques.find(b => b.id === Number(banqueId))
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Référence *</label>
-        <input className={`input-field ${errors.reference ? 'border-red-400' : ''}`}
-          {...register('reference', { required: 'Référence requise' })} />
-      </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Partenaire *</label>
@@ -45,6 +43,22 @@ function RefinancementForm({ onSubmit, defaultValues, loading, partenaires, banq
           </select>
         </div>
       </div>
+
+      {/* Taux appliqué automatiquement depuis la banque */}
+      <div className={`rounded-xl px-4 py-3 flex items-center justify-between text-sm
+        ${banqueSelectionnee
+          ? banqueSelectionnee.tauxRefinancement != null
+            ? 'bg-emerald-50 border border-emerald-200'
+            : 'bg-red-50 border border-red-200'
+          : 'bg-gray-50 border border-gray-200'}`}>
+        <span className="font-medium text-gray-600">Taux de refinancement (banque) :</span>
+        {!banqueSelectionnee && <span className="text-gray-400 italic">Sélectionnez une banque</span>}
+        {banqueSelectionnee && banqueSelectionnee.tauxRefinancement != null &&
+          <span className="font-bold text-emerald-700 text-base">{banqueSelectionnee.tauxRefinancement} %</span>}
+        {banqueSelectionnee && banqueSelectionnee.tauxRefinancement == null &&
+          <span className="font-semibold text-red-600">Non configuré — renseignez la fiche banque</span>}
+      </div>
+
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Montant (MAD) *</label>
@@ -52,21 +66,14 @@ function RefinancementForm({ onSubmit, defaultValues, loading, partenaires, banq
             {...register('montant', { required: true, min: 0.01, valueAsNumber: true })} />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Taux (%)</label>
-          <input type="number" step="0.01" className="input-field"
-            {...register('taux', { min: 0, valueAsNumber: true })} />
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Durée (mois) *</label>
           <input type="number" className="input-field"
             {...register('duree', { required: true, min: 1, valueAsNumber: true })} />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Date création</label>
-          <input type="date" className="input-field" {...register('dateCreation')} />
-        </div>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Date d'échéance</label>
+        <input type="date" className="input-field" {...register('dateEcheance')} />
       </div>
       <div className="flex justify-end pt-2">
         <button type="submit" disabled={loading} className="btn-primary text-sm">
@@ -87,7 +94,7 @@ function StatutSelector({ refinancement, onChanged }) {
       await refinancementService.changerStatut(refinancement.id, statut)
       toast.success('Statut mis à jour')
       onChanged()
-    } catch { toast.error('Erreur changement statut') }
+    } catch (err) { toast.error(err.response?.data?.message || 'Erreur changement statut') }
     finally { setLoading(false) }
   }
 
@@ -96,7 +103,7 @@ function StatutSelector({ refinancement, onChanged }) {
   return (
     <select value={refinancement.statut} onChange={e => change(e.target.value)} disabled={loading}
       className="text-xs border border-gray-200 rounded px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500">
-      {STATUTS.map(s => <option key={s} value={s}>{s}</option>)}
+      {STATUTS.map(s => <option key={s} value={s}>{STATUT_LABELS[s] || s}</option>)}
     </select>
   )
 }
@@ -115,7 +122,7 @@ export default function RefinancementsPage() {
   const pag = usePagination(10)
 
   const loadRefs = useCallback(() => {
-    partenaireService.getAll({ size: 200 }).then(r => setPartenaires(r.data.content)).catch(() => {})
+    partenaireService.getAll({ size: 200, type: 'FOURNISSEUR' }).then(r => setPartenaires(r.data.content)).catch(() => {})
     banqueService.getAll({ size: 200 }).then(r => setBanques(r.data.content)).catch(() => {})
   }, [])
 
@@ -159,7 +166,7 @@ export default function RefinancementsPage() {
           <select value={filterStatut} onChange={e => setFilterStatut(e.target.value)}
             className="input-field w-44 text-sm">
             <option value="">Tous les statuts</option>
-            {STATUTS.map(s => <option key={s} value={s}>{s}</option>)}
+            {STATUTS.map(s => <option key={s} value={s}>{STATUT_LABELS[s] || s}</option>)}
           </select>
           <p className="text-sm text-gray-500">{pag.totalElements} résultat(s)</p>
         </div>
@@ -212,7 +219,7 @@ export default function RefinancementsPage() {
       <Modal isOpen={showForm} onClose={() => setShowForm(false)} size="lg"
         title={selected ? 'Modifier le refinancement' : 'Nouveau refinancement'}>
         <RefinancementForm onSubmit={handleSave} loading={saving} partenaires={partenaires} banques={banques}
-          defaultValues={selected || { reference: '', partenaireId: '', banqueId: '', montant: '', taux: '', duree: '', dateCreation: '' }} />
+          defaultValues={selected || { partenaireId: '', banqueId: '', montant: '', duree: '', dateEcheance: '' }} />
       </Modal>
 
       <ConfirmDialog isOpen={showDel} onClose={() => setShowDel(false)} onConfirm={handleDelete}

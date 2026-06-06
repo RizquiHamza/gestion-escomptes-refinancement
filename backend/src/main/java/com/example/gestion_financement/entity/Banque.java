@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
+import java.math.BigDecimal;
+
 import java.util.List;
 
 @Entity
@@ -29,6 +31,12 @@ public class Banque {
     private String adresse;
 
     private String telephone;
+
+    @Column(precision = 5, scale = 2)
+    private BigDecimal tauxEscompte;
+
+    @Column(precision = 5, scale = 2)
+    private BigDecimal tauxRefinancement;
 
     @JsonIgnore
     @OneToMany(mappedBy = "banque", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

@@ -3,6 +3,7 @@ package com.example.gestion_financement.service;
 import com.example.gestion_financement.entity.LogAction;
 import com.example.gestion_financement.entity.Utilisateur;
 import com.example.gestion_financement.repository.LogActionRepository;
+import com.example.gestion_financement.repository.UtilisateurRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,8 +16,9 @@ import java.util.List;
 @Transactional
 public class LogActionService {
 
-    private final LogActionRepository logActionRepository;
-    private final UtilisateurService utilisateurService;
+    private final LogActionRepository    logActionRepository;
+    private final UtilisateurService     utilisateurService;
+    private final UtilisateurRepository  utilisateurRepository;
 
     @Transactional(readOnly = true)
     public List<LogAction> findAll() {
@@ -55,5 +57,32 @@ public class LogActionService {
             .dateAction(LocalDateTime.now())
             .build();
         return logActionRepository.save(log);
+    }
+
+    public void delete(Long id) {
+        if (!logActionRepository.existsById(id)) {
+            throw new com.example.gestion_financement.exception.ResourceNotFoundException(
+                "Journal introuvable : " + id);
+        }
+        logActionRepository.deleteById(id);
+    }
+
+    public void deleteAll() {
+        logActionRepository.deleteAll();
+    }
+
+    public void logParEmail(String email, String action, String entite,
+                            Long entiteId, String details) {
+        if (email == null) return;
+        utilisateurRepository.findByEmail(email).ifPresent(u ->
+            logActionRepository.save(LogAction.builder()
+                .utilisateur(u)
+                .action(action)
+                .entite(entite)
+                .entiteId(entiteId)
+                .details(details)
+                .dateAction(LocalDateTime.now())
+                .build())
+        );
     }
 }

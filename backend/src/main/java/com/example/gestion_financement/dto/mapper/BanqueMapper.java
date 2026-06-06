@@ -16,6 +16,8 @@ public class BanqueMapper {
                 .code(b.getCode())
                 .adresse(b.getAdresse())
                 .telephone(b.getTelephone())
+                .tauxEscompte(b.getTauxEscompte())
+                .tauxRefinancement(b.getTauxRefinancement())
                 .build();
     }
 

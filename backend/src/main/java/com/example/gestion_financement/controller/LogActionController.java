@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -25,32 +26,53 @@ public class LogActionController {
 
     @Operation(summary = "100 dernières actions (tri décroissant)")
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'RESPONSABLE')")
     public ResponseEntity<List<LogActionResponse>> findAll() {
         return ResponseEntity.ok(LogActionMapper.toDtoList(logActionService.findRecents()));
     }
 
     @Operation(summary = "Logs d'un utilisateur spécifique")
     @GetMapping("/utilisateur/{utilisateurId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RESPONSABLE')")
     public ResponseEntity<List<LogActionResponse>> findByUtilisateur(@PathVariable Long utilisateurId) {
         return ResponseEntity.ok(LogActionMapper.toDtoList(logActionService.findByUtilisateur(utilisateurId)));
     }
 
     @Operation(summary = "Logs d'une entité spécifique (ex : Escompte, Refinancement)")
     @GetMapping("/entite/{entite}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RESPONSABLE')")
     public ResponseEntity<List<LogActionResponse>> findByEntite(@PathVariable String entite) {
         return ResponseEntity.ok(LogActionMapper.toDtoList(logActionService.findByEntite(entite)));
     }
 
     @Operation(summary = "Logs sur une période donnée (format ISO : 2024-01-01T00:00:00)")
     @GetMapping("/periode")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RESPONSABLE')")
     public ResponseEntity<List<LogActionResponse>> findByPeriode(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime debut,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fin) {
         return ResponseEntity.ok(LogActionMapper.toDtoList(logActionService.findByPeriode(debut, fin)));
     }
 
+    @Operation(summary = "Supprimer un journal par ID")
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        logActionService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Supprimer tous les journaux")
+    @DeleteMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteAll() {
+        logActionService.deleteAll();
+        return ResponseEntity.noContent().build();
+    }
+
     @Operation(summary = "Enregistrer une action manuellement")
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<LogActionResponse> log(
             @RequestParam Long utilisateurId,
             @RequestParam String action,

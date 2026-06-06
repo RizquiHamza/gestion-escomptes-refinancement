@@ -25,6 +25,9 @@ public class EscompteMapper {
                 .agios(e.getAgios())
                 .netRecu(e.getNetRecu())
                 .statut(e.getStatut() != null ? e.getStatut().name() : null)
+                .creeParId(e.getCreePar() != null ? e.getCreePar().getId() : null)
+                .creeParNom(e.getCreePar() != null ? e.getCreePar().getNom() : null)
+                .creeParPrenom(e.getCreePar() != null ? e.getCreePar().getPrenom() : null)
                 .build();
     }
 

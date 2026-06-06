@@ -22,10 +22,12 @@ public class DashboardService {
     private final UtilisateurRepository utilisateurRepository;
 
     public DashboardResponse getDashboard() {
-        BigDecimal montantEscomptes = escompteRepository.sumMontantApprouve();
-        BigDecimal agios = escompteRepository.sumAgiosApprouve();
-        BigDecimal montantRefinancements = refinancementRepository.sumMontantApprouve();
-        BigDecimal interets = refinancementRepository.sumInteretsApprouve();
+        BigDecimal montantEscomptes    = escompteRepository.sumMontantApprouve();
+        BigDecimal agios               = escompteRepository.sumAgiosApprouve();
+        BigDecimal netRecu             = escompteRepository.sumNetRecuApprouve();
+        BigDecimal montantRefin        = refinancementRepository.sumMontantApprouve();
+        BigDecimal interets            = refinancementRepository.sumInteretsApprouve();
+        BigDecimal totalRembours       = refinancementRepository.sumTotalRemboursementApprouve();
 
         return DashboardResponse.builder()
             // Escomptes
@@ -36,12 +38,14 @@ public class DashboardService {
             .escomptesClos(escompteRepository.countByStatut(StatutOperation.CLOS))
             .montantTotalEscomptes(montantEscomptes != null ? montantEscomptes : BigDecimal.ZERO)
             .agiosTotaux(agios != null ? agios : BigDecimal.ZERO)
+            .netRecuTotal(netRecu != null ? netRecu : BigDecimal.ZERO)
             // Refinancements
             .totalRefinancements(refinancementRepository.count())
             .refinancementsEnAttente(refinancementRepository.countByStatut(StatutOperation.EN_ATTENTE))
             .refinancementsApprouves(refinancementRepository.countByStatut(StatutOperation.APPROUVE))
-            .montantTotalRefinancements(montantRefinancements != null ? montantRefinancements : BigDecimal.ZERO)
+            .montantTotalRefinancements(montantRefin != null ? montantRefin : BigDecimal.ZERO)
             .interetsTotaux(interets != null ? interets : BigDecimal.ZERO)
+            .totalRemboursement(totalRembours != null ? totalRembours : BigDecimal.ZERO)
             // Partenaires & autres
             .totalClients(partenaireRepository.countByType(TypePartenaire.CLIENT))
             .totalFournisseurs(partenaireRepository.countByType(TypePartenaire.FOURNISSEUR))

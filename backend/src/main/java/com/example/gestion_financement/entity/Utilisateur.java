@@ -52,6 +52,10 @@ public class Utilisateur {
     @Column(nullable = false)
     private Boolean actif = true;
 
+    @Builder.Default
+    @Column(name = "doit_changer_mot_de_passe", columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean doitChangerMotDePasse = false;
+
     private LocalDate dateCreation;
 
     @JsonIgnore

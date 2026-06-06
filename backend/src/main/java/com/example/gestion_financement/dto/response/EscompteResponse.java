@@ -27,4 +27,7 @@ public class EscompteResponse {
     private BigDecimal agios;
     private BigDecimal netRecu;
     private String statut;
+    private Long creeParId;
+    private String creeParNom;
+    private String creeParPrenom;
 }

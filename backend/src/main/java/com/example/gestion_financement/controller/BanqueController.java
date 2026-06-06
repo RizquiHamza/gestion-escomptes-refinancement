@@ -16,6 +16,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Banques", description = "Gestion des banques partenaires")
@@ -44,24 +46,32 @@ public class BanqueController {
     @Operation(summary = "Créer une nouvelle banque")
     @ApiResponse(responseCode = "201", description = "Banque créée")
     @PostMapping
-    public ResponseEntity<BanqueResponse> create(@Valid @RequestBody Banque banque) {
+    public ResponseEntity<BanqueResponse> create(
+            @Valid @RequestBody Banque banque,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails != null ? userDetails.getUsername() : null;
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(BanqueMapper.toDto(banqueService.save(banque)));
+                .body(BanqueMapper.toDto(banqueService.save(banque, email)));
     }
 
     @Operation(summary = "Modifier une banque existante")
     @PutMapping("/{id}")
     public ResponseEntity<BanqueResponse> update(
             @PathVariable Long id,
-            @Valid @RequestBody Banque banque) {
-        return ResponseEntity.ok(BanqueMapper.toDto(banqueService.update(id, banque)));
+            @Valid @RequestBody Banque banque,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails != null ? userDetails.getUsername() : null;
+        return ResponseEntity.ok(BanqueMapper.toDto(banqueService.update(id, banque, email)));
     }
 
     @Operation(summary = "Supprimer une banque")
     @ApiResponse(responseCode = "204", description = "Banque supprimée")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        banqueService.delete(id);
+    public ResponseEntity<Void> delete(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails != null ? userDetails.getUsername() : null;
+        banqueService.delete(id, email);
         return ResponseEntity.noContent().build();
     }
 }
